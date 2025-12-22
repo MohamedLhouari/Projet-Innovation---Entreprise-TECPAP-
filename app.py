@@ -21,6 +21,59 @@ oee_predictor = OEEPredictor()
 line_recommender = LineRecommender()
 anomaly_expert = AnomalyExpert()
 
+# Variable pour suivre l'état d'initialisation
+_system_initialized = False
+
+def initialize_system():
+    """Initialisation du système au démarrage (compatible Gunicorn)"""
+    global _system_initialized
+    
+    if _system_initialized:
+        return True
+    
+    print("=" * 60)
+    print("Agent IA de Décision OEE - TECPAP - Initialisation")
+    print("=" * 60)
+    
+    try:
+        # 1. Chargement des données
+        print("\n[1/4] Chargement des données...")
+        if not data_loader.load_data():
+            print("Erreur lors du chargement des données")
+            return False
+        print("✓ Données chargées avec succès")
+        
+        # 2. Entraînement du modèle de prédiction
+        print("\n[2/4] Entraînement du modèle de prédiction OEE...")
+        oee_predictor.train()
+        print("✓ Modèle entraîné")
+        
+        # 3. Initialisation du système de recommandation
+        print("\n[3/4] Initialisation du système de recommandation...")
+        line_recommender.initialize()
+        print("✓ Recommandation initialisée")
+        
+        # 4. Chargement de la base de connaissances
+        print("\n[4/4] Chargement de la base de connaissances...")
+        anomaly_expert.load_knowledge_base()
+        print("✓ Expert en anomalies prêt")
+        
+        print("\n" + "=" * 60)
+        print("✅ Système opérationnel!")
+        print("=" * 60 + "\n")
+        
+        _system_initialized = True
+        return True
+        
+    except Exception as e:
+        print(f"\nErreur lors de l'initialisation: {e}")
+        import traceback
+        traceback.print_exc()
+        return False
+
+# Initialisation automatique au chargement du module (fonctionne avec Gunicorn)
+initialize_system()
+
 @app.route('/')
 def index():
     """Dashboard principal"""
