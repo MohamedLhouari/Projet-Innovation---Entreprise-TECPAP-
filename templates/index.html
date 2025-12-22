@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Agent IA - Amélioration OEE | TECPAP</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <header class="header">
+            <div class="header-content">
+                <div class="logo-section">
+                    <h1 class="title">Agent IA de Décision OEE</h1>
+                    <p class="subtitle">Système Intelligent d'Optimisation de Production - TECPAP</p>
+                </div>
+                <div class="status-indicator">
+                    <span class="status-dot active"></span>
+                    <span class="status-text">Système Opérationnel</span>
+                </div>
+            </div>
+        </header>
+
+        <!-- Navigation -->
+        <nav class="nav-tabs">
+            <button class="tab-button active" data-tab="dashboard">Dashboard</button>
+            <button class="tab-button" data-tab="predictions">Prédictions</button>
+            <button class="tab-button" data-tab="recommendations">Recommandations</button>
+            <button class="tab-button" data-tab="anomalies">Anomalies</button>
+            <button class="tab-button" data-tab="analytics">Analytics</button>
+        </nav>
+
+        <!-- Dashboard Tab -->
+        <div class="tab-content active" id="dashboard">
+            <!-- KPI Cards -->
+            <div class="kpi-grid">
+                <div class="kpi-card">
+                    <div class="kpi-header">
+                        <h3 class="kpi-title">Ligne 1 (L1)</h3>
+                        <span class="kpi-badge status-good">Running</span>
+                    </div>
+                    <div class="kpi-value" id="l1-oee">--</div>
+                    <div class="kpi-label">OEE Actuel</div>
+                    <div class="kpi-details">
+                        <div class="detail-item">
+                            <span class="detail-label">Disponibilité:</span>
+                            <span class="detail-value" id="l1-availability">--</span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="detail-label">Performance:</span>
+                            <span class="detail-value" id="l1-performance">--</span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="detail-label">Qualité:</span>
+                            <span class="detail-value" id="l1-quality">--</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="kpi-card">
+                    <div class="kpi-header">
+                        <h3 class="kpi-title">Ligne 2 (L2)</h3>
+                        <span class="kpi-badge status-good">Running</span>
+                    </div>
+                    <div class="kpi-value" id="l2-oee">--</div>
+                    <div class="kpi-label">OEE Actuel</div>
+                    <div class="kpi-details">
+                        <div class="detail-item">
+                            <span class="detail-label">Disponibilité:</span>
+                            <span class="detail-value" id="l2-availability">--</span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="detail-label">Performance:</span>
+                            <span class="detail-value" id="l2-performance">--</span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="detail-label">Qualité:</span>
+                            <span class="detail-value" id="l2-quality">--</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="kpi-card">
+                    <div class="kpi-header">
+                        <h3 class="kpi-title">Ligne 3 (L3)</h3>
+                        <span class="kpi-badge status-good">Running</span>
+                    </div>
+                    <div class="kpi-value" id="l3-oee">--</div>
+                    <div class="kpi-label">OEE Actuel</div>
+                    <div class="kpi-details">
+                        <div class="detail-item">
+                            <span class="detail-label">Disponibilité:</span>
+                            <span class="detail-value" id="l3-availability">--</span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="detail-label">Performance:</span>
+                            <span class="detail-value" id="l3-performance">--</span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="detail-label">Qualité:</span>
+                            <span class="detail-value" id="l3-quality">--</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="kpi-card recommendation-card">
+                    <div class="kpi-header">
+                        <h3 class="kpi-title">Recommandation IA</h3>
+                        <span class="kpi-badge status-ai">IA Active</span>
+                    </div>
+                    <div class="recommendation-content">
+                        <div class="recommended-line" id="recommended-line">--</div>
+                        <div class="recommendation-score">
+                            Score: <span id="recommendation-score">--</span>
+                        </div>
+                        <div class="recommendation-reason" id="recommendation-reason">
+                            Analyse en cours...
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Alerts Section -->
+            <div class="alerts-section" id="alerts-container">
+                <h2 class="section-title">Alertes Actives</h2>
+                <div class="alerts-grid" id="alerts-grid">
+                    <div class="alert-placeholder">Chargement des alertes...</div>
+                </div>
+            </div>
+
+            <!-- Chart Section -->
+            <div class="chart-section">
+                <h2 class="section-title">Évolution OEE - 24 Dernières Heures</h2>
+                <canvas id="oeeChart"></canvas>
+            </div>
+        </div>
+
+        <!-- Predictions Tab -->
+        <div class="tab-content" id="predictions">
+            <div class="predictions-header">
+                <h2 class="section-title">Prédictions OEE - 7 Prochains Jours</h2>
+                <div class="line-selector">
+                    <button class="selector-btn active" data-line="L1">Ligne 1</button>
+                    <button class="selector-btn" data-line="L2">Ligne 2</button>
+                    <button class="selector-btn" data-line="L3">Ligne 3</button>
+                </div>
+            </div>
+            
+            <div class="predictions-content">
+                <div class="predictions-chart">
+                    <canvas id="predictionsChart"></canvas>
+                </div>
+                
+                <div class="predictions-table">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>OEE Prédit</th>
+                                <th>Confiance</th>
+                                <th>Tendance</th>
+                            </tr>
+                        </thead>
+                        <tbody id="predictions-tbody">
+                            <tr><td colspan="4">Chargement...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Recommendations Tab -->
+        <div class="tab-content" id="recommendations">
+            <div class="recommendations-section">
+                <h2 class="section-title">Simulation de Scénarios de Production</h2>
+                
+                <div class="scenario-config">
+                    <div class="config-group">
+                        <label>Type de Produit:</label>
+                        <select id="product-type">
+                            <option value="standard">Standard</option>
+                            <option value="premium">Premium</option>
+                            <option value="special">Spécial</option>
+                        </select>
+                    </div>
+                    <div class="config-group">
+                        <label>Quantité:</label>
+                        <input type="number" id="quantity-input" value="1000" min="100" step="100">
+                    </div>
+                    <button class="btn-primary" id="simulate-btn">Simuler les Scénarios</button>
+                </div>
+
+                <div class="scenarios-grid" id="scenarios-grid">
+                    <!-- Scenarios will be populated here -->
+                </div>
+
+                <div class="comparison-section" id="comparison-section" style="display:none;">
+                    <h3 class="subsection-title">Analyse Comparative</h3>
+                    <div class="comparison-grid" id="comparison-grid">
+                        <!-- Comparison data will be populated here -->
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Anomalies Tab -->
+        <div class="tab-content" id="anomalies">
+            <div class="anomalies-section">
+                <h2 class="section-title">Base de Connaissances des Anomalies</h2>
+                
+                <div class="anomaly-search">
+                    <div class="search-box">
+                        <input type="text" id="anomaly-search-input" placeholder="Décrire le symptôme ou l'anomalie...">
+                        <button class="btn-primary" id="search-anomaly-btn">Rechercher Solutions Similaires</button>
+                    </div>
+                </div>
+
+                <div class="search-results" id="search-results" style="display:none;">
+                    <h3 class="subsection-title">Cas Similaires Trouvés</h3>
+                    <div id="similar-cases">
+                        <!-- Results will be populated here -->
+                    </div>
+                </div>
+
+                <div class="recent-anomalies">
+                    <h3 class="subsection-title">Anomalies Récentes (30 Derniers Jours)</h3>
+                    <div class="anomalies-table-container">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Date</th>
+                                    <th>Ligne</th>
+                                    <th>Machine</th>
+                                    <th>Symptôme</th>
+                                    <th>Cause</th>
+                                    <th>Solution</th>
+                                    <th>Impact OEE</th>
+                                    <th>Temps Résolution</th>
+                                </tr>
+                            </thead>
+                            <tbody id="anomalies-tbody">
+                                <tr><td colspan="8">Chargement...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Analytics Tab -->
+        <div class="tab-content" id="analytics">
+            <div class="analytics-section">
+                <h2 class="section-title">Analyse Historique et Impact</h2>
+                
+                <div class="analytics-grid">
+                    <div class="analytics-card">
+                        <h3>Impact Potentiel d'Amélioration</h3>
+                        <div class="impact-calculator">
+                            <div class="calc-input">
+                                <label>OEE Actuel Moyen:</label>
+                                <input type="number" id="current-oee-input" value="74" step="0.1">%
+                            </div>
+                            <div class="calc-input">
+                                <label>Amélioration Cible:</label>
+                                <input type="number" id="improvement-input" value="3" step="0.5" min="0.5" max="10">%
+                            </div>
+                            <button class="btn-primary" id="calculate-impact-btn">Calculer l'Impact</button>
+                            
+                            <div class="impact-results" id="impact-results" style="display:none;">
+                                <div class="result-item">
+                                    <span class="result-label">OEE Cible:</span>
+                                    <span class="result-value" id="target-oee">--</span>%
+                                </div>
+                                <div class="result-item">
+                                    <span class="result-label">Gain Annuel (heures):</span>
+                                    <span class="result-value" id="gain-hours">--</span>h
+                                </div>
+                                <div class="result-item highlight">
+                                    <span class="result-label">Gain Productivité:</span>
+                                    <span class="result-value" id="gain-percent">--</span>%
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="analytics-card">
+                        <h3>Performance par Ligne (30 Jours)</h3>
+                        <canvas id="performanceChart"></canvas>
+                    </div>
+                </div>
+
+                <div class="historical-chart">
+                    <h3>Évolution OEE - 90 Derniers Jours</h3>
+                    <canvas id="historicalChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <footer class="footer">
+            <p>Agent IA de Décision pour l'Amélioration de l'OEE - Développé pour TECPAP</p>
+            <p class="footer-meta">Dernière mise à jour: <span id="last-update">--</span></p>
+        </footer>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+</body>
+</html>
