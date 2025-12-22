@@ -1,10 +1,17 @@
 # Fichiers de modèles entraînés
 *.pkl
 
+# Données générées (trop volumineuses pour Git)
+data/generated/*.csv
+
 # Environnement virtuel
 venv/
 env/
 ENV/
+.venv
+
+# Variables d'environnement
+.env
 
 # Cache Python
 __pycache__/

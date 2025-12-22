@@ -178,6 +178,8 @@ def calculate_production_gain(current_oee, improvement):
     }
 
 if __name__ == '__main__':
+    import os
+    
     print("=" * 60)
     print("Agent IA de Décision pour l'Amélioration de l'OEE - TECPAP")
     print("=" * 60)
@@ -198,7 +200,16 @@ if __name__ == '__main__':
     print("✓ Base de connaissances des anomalies chargée")
     
     print("\nDémarrage du serveur Flask...")
-    print("Accédez à l'application sur: http://localhost:5000")
+    
+    # Configuration pour déploiement (Render, Heroku, etc.)
+    port = int(os.environ.get('PORT', 5000))
+    debug_mode = os.environ.get('FLASK_ENV', 'development') != 'production'
+    
+    if debug_mode:
+        print("Accédez à l'application sur: http://localhost:5000")
+    else:
+        print(f"Application en production sur le port {port}")
+    
     print("=" * 60)
     
-    app.run(debug=True, host='0.0.0.0', port=5000)
+    app.run(debug=debug_mode, host='0.0.0.0', port=port)
