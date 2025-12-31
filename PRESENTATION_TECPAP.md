@@ -3,9 +3,10 @@
 ## Executive Summary
 
 **Solution**: Agent IA de Décision pour l'Amélioration de l'OEE  
-**Objectif**: Amélioration de +1% à +5% de l'OEE  
-**Innovation**: Transformation de données descriptives en recommandations prescriptives  
-**Technologie**: Intelligence Artificielle et Machine Learning
+**Objectif**: Amélioration de **+4% à +9%** de l'OEE (mis à jour!)  
+**Innovation**: Transformation de données descriptives en recommandations prescriptives + **Optimisation Vitesse Machine**  
+**Technologie**: Intelligence Artificielle et Machine Learning  
+**Valeur**: **124,000€ à 266,000€** de gain annuel estimé
 
 ---
 
@@ -34,7 +35,7 @@ Un système intelligent qui va **au-delà de l'analyse classique** pour:
 - Automatiser les recommandations stratégiques
 - Apprendre continuellement des historiques
 
-### Architecture en 3 Piliers
+### Architecture en 4 Piliers (mis à jour!)
 
 #### Pilier 1: Prédiction
 - **OEE futur** de chaque machine/ligne
@@ -47,6 +48,19 @@ Un système intelligent qui va **au-delà de l'analyse classique** pour:
 - **Simulation de scénarios** (L1 vs L2 vs L3)
 - **Optimisation multi-critères** (coût, temps, qualité)
 - **Analyse d'impact** en temps réel
+
+#### Pilier 3: Système Expert
+- **Historique des anomalies** et solutions
+- **Recherche de similarité** pour résolution rapide
+- **Propositions d'actions correctives**
+- **Base de connaissances évolutive**
+
+#### Pilier 4: Optimisation Vitesse (NOUVEAU! 🆕)
+- **Sweet Spot Finder**: Trouve la vitesse optimale automatiquement
+- **Balance Production/Qualité**: Maximise les pièces bonnes/heure
+- **Par Type de Produit**: Adapté aux 4 types de sacs Kraft
+- **Comparaison Multi-Lignes**: Identifie la meilleure ligne pour chaque produit
+- **Impact**: +3% à +6% OEE supplémentaire
 
 #### Pilier 3: Système Expert
 - **Historique des anomalies** et solutions

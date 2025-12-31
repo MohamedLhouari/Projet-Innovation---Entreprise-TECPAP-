@@ -178,22 +178,18 @@ class LineRecommender:
         """Simule différents scénarios de production"""
         scenarios = []
         
+        # Obtenir les recommandations pour toutes les lignes
+        all_recommendations = self.recommend(product_type, quantity)
+        all_lines_data = [all_recommendations['details']] + all_recommendations['alternatives']
+        
         for line in self.lines:
-            scenario = self.recommend(product_type, quantity)
+            # Trouver les détails pour cette ligne spécifique
             line_details = next(
-                (s for s in [scenario['details']] + scenario['alternatives'] 
-                 if s['line_id'] == line), 
+                (s for s in all_lines_data if s['line_id'] == line), 
                 None
             )
             
             if line_details:
-                # Calcul des coûts estimés
-                production_cost = line_details['production_time_hours'] * 150  # €/heure
-                waste_cost = (line_details['estimated_pieces'] - quantity) * 0.50  # €/pièce
-                operator_cost = line_details['operators_needed'] * line_details['production_time_hours'] * 25
-                
-                total_cost = production_cost + waste_cost + operator_cost
-                
                 # Risques
                 risk_level = 'Low'
                 if line_details['predicted_oee'] < 70:
@@ -203,30 +199,24 @@ class LineRecommender:
                 
                 scenarios.append({
                     'line_id': line,
-                    'oee_predicted': line_details['predicted_oee'],
-                    'production_time': line_details['production_time_hours'],
-                    'total_cost': round(total_cost, 2),
+                    'oee_predicted': round(line_details['predicted_oee'], 2),
+                    'production_time': round(line_details['production_time_hours'], 2),
                     'risk_level': risk_level,
-                    'quality_expected': line_details['quality_rate'],
-                    'recommendation_rank': scenarios.index(line_details) + 1 if line_details in [scenario['details']] + scenario['alternatives'] else len(scenarios) + 1
+                    'quality_expected': round(line_details['quality_rate'], 2),
+                    'recommendation_rank': len(scenarios) + 1
                 })
         
         # Comparaison
-        best_scenario = min(scenarios, key=lambda x: x['total_cost'])
         fastest_scenario = min(scenarios, key=lambda x: x['production_time'])
         safest_scenario = max(scenarios, key=lambda x: x['oee_predicted'])
+        best_quality_scenario = max(scenarios, key=lambda x: x['quality_expected'])
         
         return {
             'scenarios': scenarios,
             'comparison': {
-                'most_economical': best_scenario['line_id'],
                 'fastest': fastest_scenario['line_id'],
                 'most_reliable': safest_scenario['line_id'],
-                'cost_difference': round(
-                    max(s['total_cost'] for s in scenarios) - 
-                    min(s['total_cost'] for s in scenarios), 
-                    2
-                ),
+                'best_quality': best_quality_scenario['line_id'],
                 'time_difference': round(
                     max(s['production_time'] for s in scenarios) - 
                     min(s['production_time'] for s in scenarios), 

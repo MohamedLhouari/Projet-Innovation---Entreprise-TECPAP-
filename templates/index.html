@@ -19,9 +19,13 @@
                         <p class="subtitle">Système Intelligent d'Optimisation de Production - TECPAP</p>
                     </div>
                 </div>
-                <div class="status-indicator">
-                    <span class="status-dot active"></span>
-                    <span class="status-text">Système Opérationnel</span>
+                <div class="status-indicator" style="display: flex; align-items: center; gap: 20px;">
+                    <a href="/" style="background: white; color: #6B4423; padding: 10px 20px; border-radius: 8px; text-decoration: none; font-weight: 600; transition: all 0.3s; border: 2px solid #6B4423;">← Accueil</a>
+                    <a href="/admin" style="background: #7CB342; color: white; padding: 10px 20px; border-radius: 8px; text-decoration: none; font-weight: 600; transition: all 0.3s;">Administration</a>
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                        <span class="status-dot active"></span>
+                        <span class="status-text">Système Opérationnel</span>
+                    </div>
                 </div>
             </div>
         </header>
@@ -31,6 +35,7 @@
             <button class="tab-button active" data-tab="dashboard">Dashboard</button>
             <button class="tab-button" data-tab="predictions">Prédictions</button>
             <button class="tab-button" data-tab="recommendations">Recommandations</button>
+            <button class="tab-button" data-tab="speed-optimization">Optimisation Vitesse</button>
             <button class="tab-button" data-tab="anomalies">Anomalies</button>
             <button class="tab-button" data-tab="analytics">Analytics</button>
         </nav>
@@ -108,17 +113,17 @@
                     </div>
                 </div>
 
-                <div class="kpi-card recommendation-card">
+                <div class="kpi-card recommendation-card" style="background: linear-gradient(135deg, #f9fef9 0%, #ffffff 100%); border: 2px solid var(--success-color);">
                     <div class="kpi-header">
-                        <h3 class="kpi-title">Recommandation IA</h3>
-                        <span class="kpi-badge status-ai">IA Active</span>
+                        <h3 class="kpi-title" style="font-size: 20px; font-weight: 700; color: var(--success-color);">Recommandation IA</h3>
+                        <span class="kpi-badge status-ai" style="background: var(--success-color); color: white; font-weight: 600;">IA Active</span>
                     </div>
-                    <div class="recommendation-content">
-                        <div class="recommended-line" id="recommended-line">--</div>
-                        <div class="recommendation-score">
+                    <div class="recommendation-content" style="padding: 20px; font-size: 15px;">
+                        <div class="recommended-line" id="recommended-line" style="font-size: 24px; font-weight: 700; color: var(--primary-color); margin-bottom: 15px;">--</div>
+                        <div class="recommendation-score" style="font-size: 16px; font-weight: 600; color: var(--success-color); margin-bottom: 15px;">
                             Score: <span id="recommendation-score">--</span>
                         </div>
-                        <div class="recommendation-reason" id="recommendation-reason">
+                        <div class="recommendation-reason" id="recommendation-reason" style="font-size: 14px; line-height: 1.6; color: var(--text-primary);">
                             Analyse en cours...
                         </div>
                     </div>
@@ -183,9 +188,10 @@
                     <div class="config-group">
                         <label>Type de Produit:</label>
                         <select id="product-type">
-                            <option value="standard">Standard</option>
-                            <option value="premium">Premium</option>
-                            <option value="special">Spécial</option>
+                            <option value="Fond_Plat">Fond Plat</option>
+                            <option value="Fond_Carre_Sans_Poignees">Fond Carré Sans Poignées</option>
+                            <option value="Fond_Carre_Poignees_Plates">Fond Carré avec Poignées Plates</option>
+                            <option value="Fond_Carre_Poignees_Torsadees">Fond Carré avec Poignées Torsadées</option>
                         </select>
                     </div>
                     <div class="config-group">
@@ -203,6 +209,70 @@
                     <h3 class="subsection-title">Analyse Comparative</h3>
                     <div class="comparison-grid" id="comparison-grid">
                         <!-- Comparison data will be populated here -->
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Speed Optimization Tab -->
+        <div class="tab-content" id="speed-optimization">
+            <div class="speed-optimization-section">
+                <h2 class="section-title">Optimisation de Vitesse Machine (Sweet Spot Finder)</h2>
+                <p class="section-description">
+                    Trouvez la vitesse optimale pour maximiser votre production nette (production × qualité). 
+                    Le système prédit l'impact de chaque vitesse sur la production et les défauts pour identifier le "Sweet Spot".
+                </p>
+                
+                <!-- Configuration -->
+                <div class="optimization-config">
+                    <div class="config-group">
+                        <label>Ligne de Production:</label>
+                        <select id="speed-line-select">
+                            <option value="L1">Ligne 1 (L1)</option>
+                            <option value="L2">Ligne 2 (L2)</option>
+                            <option value="L3">Ligne 3 (L3)</option>
+                        </select>
+                    </div>
+                    <div class="config-group">
+                        <label>Type de Sac Kraft:</label>
+                        <select id="speed-product-select">
+                            <option value="Fond_Plat">Fond Plat</option>
+                            <option value="Fond_Carre_Sans_Poignees">Fond Carré Sans Poignées</option>
+                            <option value="Fond_Carre_Poignees_Plates">Fond Carré Poignées Plates</option>
+                            <option value="Fond_Carre_Poignees_Torsadees">Fond Carré Poignées Torsadées</option>
+                        </select>
+                    </div>
+                    <button class="btn-primary" id="optimize-speed-btn">Trouver le Sweet Spot</button>
+                </div>
+
+                <!-- Résultats -->
+                <div id="optimization-results" style="display:none;">
+                    <!-- Recommandation principale -->
+                    <div class="recommendation-card">
+                        <h3 class="subsection-title">Recommandation IA</h3>
+                        <div class="recommendation-content" id="speed-recommendation">
+                            <!-- Populated by JS -->
+                        </div>
+                    </div>
+
+                    <!-- Graphique Sweet Spot -->
+                    <div class="chart-container">
+                        <h3 class="subsection-title">Courbe d'Optimisation (Sweet Spot)</h3>
+                        <canvas id="sweetSpotChart"></canvas>
+                    </div>
+
+                    <!-- Métriques détaillées -->
+                    <div class="metrics-grid" id="speed-metrics">
+                        <!-- Populated by JS -->
+                    </div>
+
+                    <!-- Comparaison multi-lignes -->
+                    <div class="comparison-section">
+                        <h3 class="subsection-title">🔄 Comparaison Toutes Lignes</h3>
+                        <button class="btn-secondary" id="compare-all-lines-btn">Comparer L1 vs L2 vs L3</button>
+                        <div class="comparison-grid" id="lines-comparison" style="display:none;">
+                            <!-- Populated by JS -->
+                        </div>
                     </div>
                 </div>
             </div>

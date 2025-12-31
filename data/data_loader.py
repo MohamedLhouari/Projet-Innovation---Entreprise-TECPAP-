@@ -53,6 +53,18 @@ class DataLoader:
                             'L2': ['M2-1', 'M2-2', 'M2-3', 'M2-4'],
                             'L3': ['M3-1', 'M3-2']}
         
+        # Types de produits TECPAP (sacs papier Kraft)
+        product_types = [
+            'Fond_Plat',
+            'Fond_Carre_Sans_Poignees',
+            'Fond_Carre_Poignees_Plates',
+            'Fond_Carre_Poignees_Torsadees'
+        ]
+        
+        # Vitesses optimales par ligne (pièces/heure)
+        optimal_speeds = {'L1': 1000, 'L2': 1100, 'L3': 900}
+        speed_ranges = {'L1': (700, 1300), 'L2': (800, 1400), 'L3': (600, 1200)}
+        
         # 1. Génération des données OEE (par heure)
         oee_records = []
         for day in range(730):
@@ -68,33 +80,69 @@ class DataLoader:
                     # OEE de base par ligne (L1 meilleure que L3)
                     base_oee = {'L1': 78, 'L2': 73, 'L3': 69}[line]
                     
+                    # Sélection aléatoire du type de produit
+                    product_type = np.random.choice(product_types)
+                    
+                    # Génération de la vitesse machine (avec distribution réaliste)
+                    min_speed, max_speed = speed_ranges[line]
+                    # 70% du temps proche de l'optimal, 30% éloigné
+                    if np.random.random() < 0.7:
+                        machine_speed = np.random.normal(optimal_speeds[line], 50)
+                    else:
+                        machine_speed = np.random.uniform(min_speed, max_speed)
+                    machine_speed = int(np.clip(machine_speed, min_speed, max_speed))
+                    
                     # Variations réalistes
                     seasonal_effect = 5 * np.sin(2 * np.pi * day / 365)
                     hour_effect = -3 if hour < 8 or hour > 20 else 0
                     random_var = np.random.normal(0, 3)
                     
+                    # Impact de la vitesse sur OEE (courbe en U)
+                    # Plus on s'éloigne de l'optimal, plus l'OEE baisse
+                    speed_deviation = abs(machine_speed - optimal_speeds[line])
+                    speed_penalty = (speed_deviation / 100) ** 1.5  # Pénalité non-linéaire
+                    
                     # Anomalies aléatoires (5% de chance)
                     anomaly = -15 if np.random.random() < 0.05 else 0
                     
-                    oee = base_oee + seasonal_effect + hour_effect + random_var + anomaly
+                    oee = base_oee + seasonal_effect + hour_effect + random_var - speed_penalty + anomaly
                     oee = max(40, min(95, oee))  # Bornes réalistes
                     
-                    # Composantes OEE
+                    # Composantes OEE (impactées par la vitesse)
+                    # Vitesse trop élevée → baisse qualité
+                    # Vitesse trop basse → baisse performance
+                    speed_ratio = machine_speed / optimal_speeds[line]
+                    
                     availability = oee * np.random.uniform(0.85, 0.95) / 0.9
                     performance = oee * np.random.uniform(0.88, 0.98) / 0.93
+                    if speed_ratio > 1.15:  # Trop rapide
+                        performance *= 1.05  # Meilleure performance
+                    elif speed_ratio < 0.85:  # Trop lent
+                        performance *= 0.92  # Pire performance
+                    
                     quality = oee * np.random.uniform(0.92, 0.99) / 0.96
+                    if speed_ratio > 1.15:  # Trop rapide
+                        quality *= 0.90  # Plus de défauts
+                    elif speed_ratio < 0.85:  # Trop lent
+                        quality *= 1.02  # Meilleure qualité
+                    
+                    # Production réelle basée sur la vitesse
+                    production_rate = machine_speed  # pièces/heure
+                    actual_production = int(production_rate * (oee / 100))
                     
                     oee_records.append({
                         'timestamp': timestamp,
                         'line_id': line,
+                        'product_type': product_type,
+                        'machine_speed': machine_speed,
                         'oee': round(oee, 2),
-                        'availability': round(availability, 2),
-                        'performance': round(performance, 2),
-                        'quality': round(quality, 2),
+                        'availability': round(min(100, max(40, availability)), 2),
+                        'performance': round(min(100, max(40, performance)), 2),
+                        'quality': round(min(100, max(40, quality)), 2),
                         'production_time': 60,
                         'planned_production_time': 60,
-                        'good_pieces': int(np.random.uniform(800, 1200) * (oee / 100)),
-                        'total_pieces': int(np.random.uniform(850, 1250) * (oee / 95))
+                        'good_pieces': int(actual_production * (quality / 100)),
+                        'total_pieces': actual_production
                     })
         
         oee_df = pd.DataFrame(oee_records)

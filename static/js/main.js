@@ -44,6 +44,9 @@ function switchTab(tabId) {
         case 'predictions':
             loadPredictions();
             break;
+        case 'speed-optimization':
+            // Speed optimization tab - no auto-load, user triggers
+            break;
         case 'anomalies':
             loadAnomalies();
             break;
@@ -81,6 +84,18 @@ function setupEventListeners() {
     const calcBtn = document.getElementById('calculate-impact-btn');
     if (calcBtn) {
         calcBtn.addEventListener('click', calculateImpact);
+    }
+    
+    // Speed optimization
+    const optimizeSpeedBtn = document.getElementById('optimize-speed-btn');
+    if (optimizeSpeedBtn) {
+        optimizeSpeedBtn.addEventListener('click', optimizeSpeed);
+    }
+    
+    // Compare all lines
+    const compareAllBtn = document.getElementById('compare-all-lines-btn');
+    if (compareAllBtn) {
+        compareAllBtn.addEventListener('click', compareAllLines);
     }
 }
 
@@ -339,22 +354,31 @@ async function simulateScenarios() {
     const productType = document.getElementById('product-type').value;
     const quantity = parseInt(document.getElementById('quantity-input').value);
     
+    if (!productType) {
+        alert('Veuillez sélectionner un type de produit');
+        return;
+    }
+    
     try {
         const response = await fetch(`/api/recommend?product_type=${productType}&quantity=${quantity}`);
         const data = await response.json();
         
         if (data.success) {
-            displayScenarios(data.scenarios);
-            displayComparison(data.scenarios.comparison);
+            displayScenarios(data);
+            displayComparison(data.comparison);
+        } else {
+            console.error('Erreur:', data.error);
+            alert('Erreur lors de la simulation: ' + (data.error || 'Erreur inconnue'));
         }
     } catch (error) {
         console.error('Error simulating scenarios:', error);
+        alert('Erreur de connexion au serveur');
     }
 }
 
-function displayScenarios(scenariosData) {
+function displayScenarios(data) {
     const grid = document.getElementById('scenarios-grid');
-    const scenarios = scenariosData.scenarios;
+    const scenarios = data.scenarios;
     
     grid.innerHTML = scenarios.map((scenario, index) => `
         <div class="scenario-card ${index === 0 ? 'best' : ''}">
@@ -367,10 +391,6 @@ function displayScenarios(scenariosData) {
                 <div class="detail-item">
                     <span class="detail-label">Temps Production:</span>
                     <span class="detail-value">${scenario.production_time.toFixed(2)}h</span>
-                </div>
-                <div class="detail-item">
-                    <span class="detail-label">Coût Estimé:</span>
-                    <span class="detail-value">${scenario.total_cost.toFixed(0)}€</span>
                 </div>
                 <div class="detail-item">
                     <span class="detail-label">Qualité Attendue:</span>
@@ -393,11 +413,6 @@ function displayComparison(comparison) {
     
     grid.innerHTML = `
         <div class="kpi-card">
-            <h4>Plus Économique</h4>
-            <div class="kpi-value" style="font-size: 36px;">${comparison.most_economical}</div>
-            <p>Économie: ${comparison.cost_difference.toFixed(0)}€</p>
-        </div>
-        <div class="kpi-card">
             <h4>Plus Rapide</h4>
             <div class="kpi-value" style="font-size: 36px;">${comparison.fastest}</div>
             <p>Gain: ${comparison.time_difference.toFixed(2)}h</p>
@@ -406,6 +421,11 @@ function displayComparison(comparison) {
             <h4>Plus Fiable</h4>
             <div class="kpi-value" style="font-size: 36px;">${comparison.most_reliable}</div>
             <p>Meilleur OEE prédit</p>
+        </div>
+        <div class="kpi-card">
+            <h4>Meilleure Qualité</h4>
+            <div class="kpi-value" style="font-size: 36px;">${comparison.best_quality}</div>
+            <p>Meilleur taux qualité</p>
         </div>
     `;
 }
@@ -638,4 +658,349 @@ function updateLastUpdateTime() {
     const now = new Date();
     const timeString = now.toLocaleTimeString('fr-FR');
     document.getElementById('last-update').textContent = timeString;
+}
+
+// ============================================
+// SPEED OPTIMIZATION FUNCTIONS
+// ============================================
+
+async function optimizeSpeed() {
+    const lineId = document.getElementById('speed-line-select').value;
+    const productType = document.getElementById('speed-product-select').value;
+    const btn = document.getElementById('optimize-speed-btn');
+    
+    // Show loading state
+    btn.disabled = true;
+    btn.textContent = '⏳ Calcul en cours...';
+    
+    try {
+        const response = await fetch('/api/speed/optimize', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                line_id: lineId,
+                product_type: productType
+            })
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            displayOptimizationResults(data.optimization);
+            createSweetSpotChart(data.optimization);
+        } else {
+            alert('Erreur lors de l\'optimisation: ' + data.error);
+        }
+    } catch (error) {
+        console.error('Error optimizing speed:', error);
+        alert('Erreur de connexion au serveur');
+    } finally {
+        btn.disabled = false;
+        btn.textContent = 'Trouver le Sweet Spot';
+    }
+}
+
+function displayOptimizationResults(result) {
+    // Show results section
+    document.getElementById('optimization-results').style.display = 'block';
+    
+    // Build recommendation card
+    const recommendationDiv = document.getElementById('speed-recommendation');
+    
+    const improvementClass = result.improvement_pct > 0 ? 'positive' : 
+                            result.improvement_pct < -2 ? 'negative' : 'neutral';
+    
+    const actionIcon = result.action === 'increase' ? '↑' : 
+                      result.action === 'decrease' ? '↓' : '→';
+    
+    recommendationDiv.innerHTML = `
+        <div class="recommendation-main">
+            <div class="recommendation-icon ${result.action}">
+                ${actionIcon}
+            </div>
+            <div class="recommendation-details">
+                <h4>${result.recommendation}</h4>
+                <p class="recommendation-subtitle">
+                    Confiance: <span class="badge badge-${result.confidence.toLowerCase()}">${result.confidence}</span>
+                </p>
+            </div>
+        </div>
+        
+        <div class="recommendation-stats">
+            <div class="stat-item">
+                <span class="stat-label">Vitesse Optimale</span>
+                <span class="stat-value highlight">${result.optimal_speed} pcs/h</span>
+            </div>
+            <div class="stat-item">
+                <span class="stat-label">Production Nette Max</span>
+                <span class="stat-value">${result.max_net_output.toFixed(1)} pcs/h</span>
+            </div>
+            <div class="stat-item">
+                <span class="stat-label">Amélioration Potentielle</span>
+                <span class="stat-value ${improvementClass}">
+                    ${result.improvement_pct > 0 ? '+' : ''}${result.improvement_pct.toFixed(2)}%
+                </span>
+            </div>
+        </div>
+    `;
+    
+    // Build metrics grid
+    const metricsDiv = document.getElementById('speed-metrics');
+    metricsDiv.innerHTML = `
+        <div class="metric-card">
+            <h4>Vitesse Actuelle</h4>
+            <div class="metric-value">${result.current_speed} pcs/h</div>
+            <div class="metric-detail">Production nette: ${result.current_net_output.toFixed(1)} pcs/h</div>
+        </div>
+        
+        <div class="metric-card highlight">
+            <h4>Sweet Spot Optimal</h4>
+            <div class="metric-value">${result.optimal_speed} pcs/h</div>
+            <div class="metric-detail">Production nette: ${result.max_net_output.toFixed(1)} pcs/h</div>
+        </div>
+        
+        <div class="metric-card">
+            <h4>Gain Attendu</h4>
+            <div class="metric-value ${improvementClass}">
+                ${result.improvement_pct > 0 ? '+' : ''}${result.improvement_pct.toFixed(2)}%
+            </div>
+            <div class="metric-detail">
+                ${Math.abs(result.max_net_output - result.current_net_output).toFixed(1)} pcs/h supplémentaires
+            </div>
+        </div>
+    `;
+    
+    // Scroll to results
+    document.getElementById('optimization-results').scrollIntoView({ behavior: 'smooth' });
+}
+
+function createSweetSpotChart(result) {
+    const ctx = document.getElementById('sweetSpotChart');
+    
+    // Destroy existing chart if any
+    if (charts.sweetSpotChart) {
+        charts.sweetSpotChart.destroy();
+    }
+    
+    const curveData = result.curve_data;
+    const speeds = curveData.map(d => d.speed);
+    const production = curveData.map(d => d.production_rate);
+    const quality = curveData.map(d => d.quality_rate);
+    const netOutput = curveData.map(d => d.net_output);
+    const defects = curveData.map(d => d.defect_rate);
+    
+    // Find optimal point index
+    const optimalIndex = speeds.indexOf(result.optimal_speed);
+    
+    charts.sweetSpotChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: speeds,
+            datasets: [
+                {
+                    label: 'Production Nette (pcs/h)',
+                    data: netOutput,
+                    borderColor: 'rgba(46, 204, 113, 1)',
+                    backgroundColor: 'rgba(46, 204, 113, 0.1)',
+                    borderWidth: 3,
+                    tension: 0.4,
+                    yAxisID: 'y',
+                    pointRadius: speeds.map((_, i) => i === optimalIndex ? 8 : 3),
+                    pointBackgroundColor: speeds.map((_, i) => 
+                        i === optimalIndex ? 'rgba(255, 215, 0, 1)' : 'rgba(46, 204, 113, 1)'
+                    ),
+                    pointBorderWidth: speeds.map((_, i) => i === optimalIndex ? 3 : 1)
+                },
+                {
+                    label: 'Production Totale (pcs/h)',
+                    data: production,
+                    borderColor: 'rgba(52, 152, 219, 1)',
+                    backgroundColor: 'rgba(52, 152, 219, 0.1)',
+                    borderWidth: 2,
+                    tension: 0.4,
+                    yAxisID: 'y',
+                    borderDash: [5, 5]
+                },
+                {
+                    label: 'Taux de Défauts (%)',
+                    data: defects,
+                    borderColor: 'rgba(231, 76, 60, 1)',
+                    backgroundColor: 'rgba(231, 76, 60, 0.1)',
+                    borderWidth: 2,
+                    tension: 0.4,
+                    yAxisID: 'y1'
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: true,
+            interaction: {
+                mode: 'index',
+                intersect: false
+            },
+            plugins: {
+                legend: {
+                    display: true,
+                    position: 'top',
+                    labels: {
+                        font: {
+                            size: 12,
+                            family: "'Segoe UI', Arial, sans-serif"
+                        }
+                    }
+                },
+                title: {
+                    display: true,
+                    text: `Courbe d'Optimisation - ${result.line_id} - ${formatProductName(result.product_type)}`,
+                    font: {
+                        size: 16,
+                        weight: 'bold'
+                    }
+                },
+                tooltip: {
+                    callbacks: {
+                        title: function(context) {
+                            return `Vitesse: ${context[0].label} pcs/h`;
+                        },
+                        afterLabel: function(context) {
+                            if (context.dataIndex === optimalIndex) {
+                                return '⭐ SWEET SPOT OPTIMAL';
+                            }
+                            return '';
+                        }
+                    }
+                }
+            },
+            scales: {
+                x: {
+                    title: {
+                        display: true,
+                        text: 'Vitesse Machine (pièces/heure)',
+                        font: {
+                            size: 14,
+                            weight: 'bold'
+                        }
+                    },
+                    grid: {
+                        color: 'rgba(0, 0, 0, 0.05)'
+                    }
+                },
+                y: {
+                    type: 'linear',
+                    display: true,
+                    position: 'left',
+                    title: {
+                        display: true,
+                        text: 'Production (pcs/h)',
+                        font: {
+                            size: 14,
+                            weight: 'bold'
+                        }
+                    },
+                    grid: {
+                        color: 'rgba(0, 0, 0, 0.05)'
+                    }
+                },
+                y1: {
+                    type: 'linear',
+                    display: true,
+                    position: 'right',
+                    title: {
+                        display: true,
+                        text: 'Taux de Défauts (%)',
+                        font: {
+                            size: 14,
+                            weight: 'bold'
+                        }
+                    },
+                    grid: {
+                        drawOnChartArea: false
+                    }
+                }
+            }
+        }
+    });
+}
+
+async function compareAllLines() {
+    const productType = document.getElementById('speed-product-select').value;
+    const btn = document.getElementById('compare-all-lines-btn');
+    
+    btn.disabled = true;
+    btn.textContent = '⏳ Comparaison en cours...';
+    
+    try {
+        const response = await fetch(`/api/speed/compare?product_type=${productType}`);
+        const data = await response.json();
+        
+        if (data.success) {
+            displayLinesComparison(data.comparison);
+        } else {
+            alert('Erreur: ' + data.error);
+        }
+    } catch (error) {
+        console.error('Error comparing lines:', error);
+        alert('Erreur de connexion');
+    } finally {
+        btn.disabled = false;
+        btn.textContent = '🔄 Comparer L1 vs L2 vs L3';
+    }
+}
+
+function displayLinesComparison(comparison) {
+    const comparisonDiv = document.getElementById('lines-comparison');
+    comparisonDiv.style.display = 'grid';
+    
+    const recommendations = comparison.recommendations;
+    const bestLine = comparison.best_line;
+    
+    let html = '';
+    
+    ['L1', 'L2', 'L3'].forEach(lineId => {
+        const result = recommendations[lineId];
+        const isBest = lineId === bestLine;
+        
+        html += `
+            <div class="comparison-card ${isBest ? 'best-option' : ''}">
+                ${isBest ? '<div class="best-badge">MEILLEUR CHOIX</div>' : ''}
+                <h4>${lineId}</h4>
+                <div class="comparison-stats">
+                    <div class="stat-row">
+                        <span>Vitesse Optimale:</span>
+                        <strong>${result.optimal_speed} pcs/h</strong>
+                    </div>
+                    <div class="stat-row">
+                        <span>Production Nette Max:</span>
+                        <strong>${result.max_net_output.toFixed(1)} pcs/h</strong>
+                    </div>
+                    <div class="stat-row">
+                        <span>Amélioration:</span>
+                        <strong class="${result.improvement_pct > 0 ? 'positive' : 'neutral'}">
+                            ${result.improvement_pct > 0 ? '+' : ''}${result.improvement_pct.toFixed(2)}%
+                        </strong>
+                    </div>
+                    <div class="stat-row">
+                        <span>Action:</span>
+                        <strong>${result.recommendation}</strong>
+                    </div>
+                </div>
+            </div>
+        `;
+    });
+    
+    comparisonDiv.innerHTML = html;
+    comparisonDiv.scrollIntoView({ behavior: 'smooth' });
+}
+
+function formatProductName(productType) {
+    const names = {
+        'Fond_Plat': 'Fond Plat',
+        'Fond_Carre_Sans_Poignees': 'Fond Carré Sans Poignées',
+        'Fond_Carre_Poignees_Plates': 'Fond Carré Poignées Plates',
+        'Fond_Carre_Poignees_Torsadees': 'Fond Carré Poignées Torsadées'
+    };
+    return names[productType] || productType;
 }
